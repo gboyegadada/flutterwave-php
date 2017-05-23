@@ -2,6 +2,7 @@
 namespace Flutterwave;
 use Flutterwave\FlutterEncrypt;
 use Flutterwave\FlutterValidator;
+use Flutterwave\AuthModel;
 
 class Card {
   private static $resources = [
@@ -35,7 +36,7 @@ class Card {
    * @param  string $bvn            card holder bvn
    * @return ApiResponse
    */
-  public static function tokenize($card, $authModel, $currency = "", $country ="", $validateOption = "", $bvn = "") {
+  public static function tokenize($card, $authModel, $currency = "", $country ="", $validateOption = "", $bvn_or_pin = "") {
     FlutterValidator::validateClientCredentialsSet();
     $key = Flutterwave::getApiKey();
     $cardNo = FlutterEncrypt::encrypt3Des($card['card_no'], $key);
@@ -46,12 +47,11 @@ class Card {
     $currency = FlutterEncrypt::encrypt3Des($currency, $key);
     $authModel = FlutterEncrypt::encrypt3Des($authModel, $key);
     $validateOption = FlutterEncrypt::encrypt3Des($validateOption, $key);
-    $bvn = FlutterEncrypt::encrypt3Des($bvn, $key);
 
     $merchantKey = Flutterwave::getMerchantKey();
 
     $resource = self::$resources[Flutterwave::getEnv()]['tokenize'];
-    $resp = (new ApiRequest($resource))
+    $req = (new ApiRequest($resource))
               ->addBody("merchantid", $merchantKey)
               ->addBody("cardno", $cardNo)
               ->addBody("cvv", $cvv)
@@ -60,9 +60,27 @@ class Card {
               ->addBody("expirymonth", $expiryMonth)
               ->addBody("expiryyear", $expiryYear)
               ->addBody("authmodel", $authModel)
-              ->addBody("validateoption", $validateOption)
-              ->addBody("bvn", $bvn)
-              ->makePostRequest();
+              ->addBody("validateoption", $validateOption);
+
+    // Add BVN or PIN if $authModel is BVN or PIN
+    switch ($authModel) {
+      case AuthModel::PIN:
+        $pin = FlutterEncrypt::encrypt3Des($bvn_or_pin, $key);
+        $req->addBody("pin", $pin);
+        break;
+      case AuthModel::BVN:
+        $bvn = FlutterEncrypt::encrypt3Des($bvn_or_pin, $key);
+        $req->addBody("bvn", $bvn);
+        break;
+      default:
+        // AUTH MODEL is not PIN or BVN
+        // Do nothing.
+        break;
+    }
+
+    // Do request
+    $resp = $req->makePostRequest();
+
     return $resp;
   }
 
