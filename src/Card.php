@@ -28,15 +28,15 @@ class Card {
     ]
   ];
 
-  /**
+ /**
    * can be used to tokenize a card for future charges
    * @param  array $card    ['card_no', 'cvv', 'expiry_month', 'expiry_year', ]
    * @param  [type] $authModel      model for authentication can be bvn
    * @param  [type] $validateOption SMS or VOICE
-   * @param  string $bvn_or_pin     card holder bvn or pin (both optional) depending on $authModel
+   * @param  string $bvn            card holder bvn
    * @return ApiResponse
    */
-  public static function tokenize($card, $authModel, $currency = "", $country ="", $validateOption = "", $bvn_or_pin = "") {
+  public static function tokenize($card, $authModel, $currency = "", $country ="", $validateOption = "", $bvn = "") {
     FlutterValidator::validateClientCredentialsSet();
     $key = Flutterwave::getApiKey();
     $cardNo = FlutterEncrypt::encrypt3Des($card['card_no'], $key);
@@ -45,14 +45,12 @@ class Card {
     $cvv = FlutterEncrypt::encrypt3Des($card['cvv'], $key);
     $country = FlutterEncrypt::encrypt3Des($country, $key);
     $currency = FlutterEncrypt::encrypt3Des($currency, $key);
-    $_authModel = $authModel;
     $authModel = FlutterEncrypt::encrypt3Des($authModel, $key);
     $validateOption = FlutterEncrypt::encrypt3Des($validateOption, $key);
-
+    $bvn = FlutterEncrypt::encrypt3Des($bvn, $key);
     $merchantKey = Flutterwave::getMerchantKey();
-
     $resource = self::$resources[Flutterwave::getEnv()]['tokenize'];
-    $req = (new ApiRequest($resource))
+    $resp = (new ApiRequest($resource))
               ->addBody("merchantid", $merchantKey)
               ->addBody("cardno", $cardNo)
               ->addBody("cvv", $cvv)
@@ -61,27 +59,9 @@ class Card {
               ->addBody("expirymonth", $expiryMonth)
               ->addBody("expiryyear", $expiryYear)
               ->addBody("authmodel", $authModel)
-              ->addBody("validateoption", $validateOption);
-
-    // Add BVN or PIN if $authModel is BVN or PIN
-    switch (strtoupper($_authModel)) {
-      case AuthModel::PIN:
-        $pin = FlutterEncrypt::encrypt3Des($bvn_or_pin, $key);
-        $req->addBody("pin", $pin);
-        break;
-      case AuthModel::BVN:
-        $bvn = FlutterEncrypt::encrypt3Des($bvn_or_pin, $key);
-        $req->addBody("bvn", $bvn);
-        break;
-      default:
-        // AUTH MODEL is not PIN or BVN
-        // Do nothing.
-        break;
-    }
-
-    // Do request
-    $resp = $req->makePostRequest();
-
+              ->addBody("validateoption", $validateOption)
+              ->addBody("bvn", $bvn)
+              ->makePostRequest();
     return $resp;
   }
 
