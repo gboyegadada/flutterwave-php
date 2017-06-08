@@ -64,7 +64,7 @@ class Card {
               ->addBody("validateoption", $validateOption);
 
     // Add BVN or PIN if $authModel is BVN or PIN
-    switch ($_authModel) {
+    switch (strtoupper($_authModel)) {
       case AuthModel::PIN:
         $pin = FlutterEncrypt::encrypt3Des($bvn_or_pin, $key);
         $req->addBody("pin", $pin);
