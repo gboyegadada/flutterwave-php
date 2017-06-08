@@ -45,6 +45,7 @@ class Card {
     $cvv = FlutterEncrypt::encrypt3Des($card['cvv'], $key);
     $country = FlutterEncrypt::encrypt3Des($country, $key);
     $currency = FlutterEncrypt::encrypt3Des($currency, $key);
+    $_authModel = $authModel;
     $authModel = FlutterEncrypt::encrypt3Des($authModel, $key);
     $validateOption = FlutterEncrypt::encrypt3Des($validateOption, $key);
 
@@ -63,7 +64,7 @@ class Card {
               ->addBody("validateoption", $validateOption);
 
     // Add BVN or PIN if $authModel is BVN or PIN
-    switch ($authModel) {
+    switch ($_authModel) {
       case AuthModel::PIN:
         $pin = FlutterEncrypt::encrypt3Des($bvn_or_pin, $key);
         $req->addBody("pin", $pin);
