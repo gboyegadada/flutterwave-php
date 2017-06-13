@@ -47,6 +47,7 @@ class ApiRequest {
     } catch (ClientException $e) {
         // echo Psr7\str($e->getRequest());
         Log::debug('Error: ' . $e->getResponse());
+        dd($e);
     }
     // Logging::getLoggerInstance()->info("response:".$response->getBody());
     return ApiResponse::parseResponse($response);
