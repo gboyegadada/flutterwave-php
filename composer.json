@@ -9,7 +9,7 @@
         }
     ],
     "require": {
-        "guzzlehttp/guzzle": "~5.0",
+        "guzzlehttp/guzzle": "~4.0",
         "monolog/monolog": "^1.20"
     }, 
     "repositories": [

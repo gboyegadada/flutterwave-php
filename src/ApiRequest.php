@@ -2,6 +2,7 @@
 namespace Flutterwave;
 
 use GuzzleHttp\Client;
+use GuzzleHttp\Exception\ClientException;
 
 /**
 * responsible for building and sending request
@@ -34,13 +35,19 @@ class ApiRequest {
   public function makePostRequest() {
     // $response = \Requests::post($this->url, $this->headers, json_encode($this->data));
     $client = new Client(['timeout'  => 60]);
-    $response = $client->post($this->url, [
-    // $response = $client->request('POST', $this->url, [
-        'json' => $this->data,
-        'headers' => [
-          'Content-Type' => 'application/json'
-        ]
-    ]);
+
+    try {
+      $response = $client->post($this->url, [
+      // $response = $client->request('POST', $this->url, [
+          'json' => $this->data,
+          'headers' => [
+            'Content-Type' => 'application/json'
+          ]
+      ]);
+    } catch (ClientException $e) {
+        // echo Psr7\str($e->getRequest());
+        Log::debug('Error: ' . $e->getResponse());
+    }
     // Logging::getLoggerInstance()->info("response:".$response->getBody());
     return ApiResponse::parseResponse($response);
   }
